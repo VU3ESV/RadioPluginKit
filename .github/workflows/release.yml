@@ -1,0 +1,58 @@
+name: Release
+
+# Tags + publishes a release every time a PR is merged into main, so downstream
+# packages can pin a new version. RadioPluginKit uses BARE semver tags (1.2.0) — not
+# v-prefixed — so SwiftPM `from:` ranges resolve them. Auto patch bump of the latest.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Only on an actual merge — closing a PR without merging must not release.
+    if: github.event.pull_request.merged == true
+    name: Tag & publish (macOS 14)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Build (sanity check)
+        run: swift build -c release
+
+      - name: Compute next version (patch bump)
+        id: ver
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          # Bare semver tags only (1.2.0), so SwiftPM consumers can resolve them.
+          latest=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || true)
+          if [ -z "$latest" ]; then
+            next="1.0.0"
+          else
+            IFS=. read -r MA MI PA <<< "$latest"
+            next="${MA}.${MI}.$((PA + 1))"
+          fi
+          echo "Latest: ${latest:-<none>} -> Next: $next"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release (creates the SwiftPM version tag)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${{ steps.ver.outputs.version }}" \
+            --title "RadioPluginKit ${{ steps.ver.outputs.version }}" \
+            --generate-notes \
+            --target "${{ github.event.pull_request.base.ref }}"
