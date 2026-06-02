@@ -23,7 +23,7 @@ jobs:
     name: Tag & publish (macOS 14)
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
