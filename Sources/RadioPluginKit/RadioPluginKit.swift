@@ -32,13 +32,37 @@ public struct PluginCommand: Identifiable {
     }
 }
 
-/// Services the container injects into each plugin. Plugins must NOT touch
-/// `UserDefaults.standard` directly — keys would collide across plugins that
-/// share the container's process. Use `defaults(for:)` for isolated storage.
+/// Services the container injects into each plugin (the plugin's "context"). Plugins
+/// must NOT touch `UserDefaults.standard` directly — keys would collide across plugins
+/// that share the container's process. Use `defaults(for:)` for isolated storage.
+///
+/// The `report` / `notify` / `setBadge` members have default no-op implementations so
+/// adopting them is optional and non-breaking; the host overrides them to route to its
+/// error surface, notification center, and sidebar badges.
 @MainActor public protocol PluginHost: AnyObject {
     func log(_ message: String, plugin: String)
     func defaults(for pluginID: String) -> UserDefaults
+
+    /// Report a typed error; the host presents it (inline banner / notification) and logs it.
+    func report(_ error: PluginError, from pluginID: String)
+    /// Ask the host to surface a notification (toast + list, optionally system delivery).
+    func notify(_ notification: PluginNotification, from pluginID: String)
+    /// Set or clear the attention badge on the plugin's sidebar/tab item.
+    func setBadge(_ badge: PluginBadge?, for pluginID: String)
 }
+
+public extension PluginHost {
+    func report(_ error: PluginError, from pluginID: String) {
+        log("error[\(error.severity.rawValue)]: \(error.title)", plugin: pluginID)
+    }
+    func notify(_ notification: PluginNotification, from pluginID: String) {
+        log("notify[\(notification.level.rawValue)]: \(notification.title)", plugin: pluginID)
+    }
+    func setBadge(_ badge: PluginBadge?, for pluginID: String) {}
+}
+
+/// Vocabulary alias: a plugin's `host` is its context (services + reporting).
+public typealias PluginContext = PluginHost
 
 /// The contract every hosted app implements. Internals of each app stay private
 /// to their own module; only the conforming type is `public`.
@@ -59,6 +83,15 @@ public struct PluginCommand: Identifiable {
 
     var menuCommands: [PluginCommand] { get }
     var settingsView: AnyView? { get }
+
+    /// Declarative manifest (capabilities, isolation, versions). Optional for
+    /// first-party in-process plugins; required for installable/third-party ones.
+    static var manifest: RadioPluginManifest? { get }
+
+    /// Serialize state for restoration after a restart/crash. `nil` = nothing to save.
+    func persistState() -> Data?
+    /// Restore previously persisted state (called before `activate()` when available).
+    func restoreState(_ data: Data)
 }
 
 public extension RadioPlugin {
@@ -66,4 +99,7 @@ public extension RadioPlugin {
     func deactivate() {}
     var menuCommands: [PluginCommand] { [] }
     var settingsView: AnyView? { nil }
+    static var manifest: RadioPluginManifest? { nil }
+    func persistState() -> Data? { nil }
+    func restoreState(_ data: Data) {}
 }
