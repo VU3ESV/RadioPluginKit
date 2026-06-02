@@ -27,7 +27,8 @@ public struct PluginNotification: Codable, Sendable, Identifiable {
 }
 
 /// Attention indicator a plugin can set on its sidebar/tab item; cleared on activation.
-public enum PluginBadge: Sendable, Equatable {
+/// `Codable` so it can cross the ExtensionKit boundary.
+public enum PluginBadge: Codable, Sendable, Equatable {
     case dot
     case count(Int)
     case text(String)

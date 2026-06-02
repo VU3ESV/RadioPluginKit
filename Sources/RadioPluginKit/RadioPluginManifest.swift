@@ -68,5 +68,6 @@ public struct RadioPluginManifest: Codable, Sendable, Identifiable {
 public enum RadioPluginSDK {
     /// Current contract version. Bumped on additive changes (minor) per the
     /// versioning policy in PLUGIN-PLATFORM.md.
-    public static let version = "1.1"
+    /// 1.2 adds the ExtensionKit out-of-process contract (RadioExtensionPoint + channel).
+    public static let version = "1.2"
 }
