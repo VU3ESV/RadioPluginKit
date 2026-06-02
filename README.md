@@ -1,6 +1,6 @@
 # RadioPluginKit
 
-Shared plugin contract for the [Amateur Radio Suite](https://github.com/VU3ESV/AmateurRadioApps)
+Shared plugin contract for the [Amateur Radio Suite](https://github.com/VU3ESV/AmateurRadioSuite)
 container app. Both the container and each hosted radio app depend on this tiny
 package so they agree on a single interface without knowing each other's internals.
 
@@ -14,5 +14,12 @@ package so they agree on a single interface without knowing each other's interna
 
 A hosted app conforms a single `public` adapter type to `RadioPlugin`; all of its
 own views, view models, and networking stay `internal` to its module.
+
+## Developer guide
+
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the full, illustrated guide: how the
+Amateur Radio Suite and its plugin architecture work, the two-tier (in-process /
+out-of-process) model, the plugin lifecycle, and a step-by-step checklist of exactly
+what an application must do to be hosted as a plugin.
 
 Requires macOS 14+.
