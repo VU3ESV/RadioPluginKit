@@ -25,6 +25,13 @@ The **Amateur Radio Suite** is a single macOS container app that hosts several
 independent amateur-radio control apps as **plugins** in one window. The user
 switches between them with either a **vertical sidebar** or **horizontal tabs**.
 
+| Sidebar layout | Tabs layout |
+|---|---|
+| ![Suite in sidebar layout](docs/images/suite-sidebar.png) | ![Suite in tabs layout](docs/images/suite-tabs.png) |
+
+The host owns the chrome (window, sidebar/tab bar, banners); each plugin — built against
+this contract — provides only the content pane and renders its controls inline.
+
 Each radio app:
 
 - stays in **its own Git repository** and can still ship as a standalone `.app`, **and**
